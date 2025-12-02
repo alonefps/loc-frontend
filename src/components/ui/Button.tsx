@@ -2,14 +2,19 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React from 'react';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   fullWidth?: boolean;
+  disabled?: boolean;
+  className?: string;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 export function Button({
@@ -20,7 +25,8 @@ export function Button({
   fullWidth = false,
   className,
   disabled,
-  ...props
+  onClick,
+  type = 'button',
 }: ButtonProps) {
   const baseStyles = 'inline-flex items-center justify-center rounded-full font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
   
@@ -49,7 +55,8 @@ export function Button({
         className
       )}
       disabled={disabled || isLoading}
-      {...props}
+      onClick={onClick}
+      type={type}
     >
       {isLoading ? (
         <div className="flex items-center gap-2">

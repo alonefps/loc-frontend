@@ -9,8 +9,8 @@ import { MapPinIcon, ArrowTopRightOnSquareIcon, StarIcon, SparklesIcon, TagIcon 
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
 export function LocationCard({ location, onSelect, isSelected }: LocationCardProps) {
-  const handleViewOnMap = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleViewOnMap = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     onSelect?.(location);
   };
 
