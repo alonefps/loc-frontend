@@ -1,5 +1,6 @@
 'use client';
 
+import { memo, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
@@ -8,14 +9,13 @@ import type { LocationCardProps } from '@/types/location';
 import { MapPinIcon, ArrowTopRightOnSquareIcon, StarIcon, SparklesIcon, TagIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
-export function LocationCard({ location, onSelect, isSelected }: LocationCardProps) {
-  const handleViewOnMap = (e?: React.MouseEvent) => {
+function LocationCardComponent({ location, onSelect, isSelected }: LocationCardProps) {
+  const handleViewOnMap = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     onSelect?.(location);
-  };
+  }, [onSelect, location]);
 
-  // Parse enriched description
-  const parseDescription = () => {
+  const parsed = useMemo(() => {
     const lines = location.description.split('\n').filter(line => line.trim());
     const stars = lines[0]?.match(/^⭐+$/)?.[0] || '';
     const offer = lines.find(line => line.startsWith('🎁 OFERTA:'))?.replace('🎁 OFERTA:', '').trim();
@@ -28,9 +28,7 @@ export function LocationCard({ location, onSelect, isSelected }: LocationCardPro
       category,
       description: mainDescription
     };
-  };
-
-  const parsed = parseDescription();
+  }, [location.description]);
   const rating = location.rating || parsed.stars;
   const discount = location.discount || parsed.offer;
 
@@ -146,4 +144,6 @@ export function LocationCard({ location, onSelect, isSelected }: LocationCardPro
     </motion.div>
   );
 }
+
+export const LocationCard = memo(LocationCardComponent);
 

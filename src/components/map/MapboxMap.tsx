@@ -1,13 +1,23 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import Map, { Marker, NavigationControl, GeolocateControl, Layer, Source } from 'react-map-gl';
-import type { MapRef } from 'react-map-gl';
-import { motion, AnimatePresence } from 'framer-motion';
-import type { Location } from '@/types/location';
-import { Button } from '@/components/ui/Button';
-import { MapPinIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { useEffect, useRef, useState, useCallback, memo } from "react";
+import Map, {
+  Marker,
+  NavigationControl,
+  GeolocateControl,
+  Layer,
+  Source,
+} from "react-map-gl";
+import type { MapRef } from "react-map-gl";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Location } from "@/types/location";
+import { Button } from "@/components/ui/Button";
+import {
+  MapPinIcon,
+  XMarkIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 interface MapboxMapProps {
   locations: Location[];
@@ -16,14 +26,21 @@ interface MapboxMapProps {
 }
 
 interface RouteInfo {
-  distance: number; // in meters
-  duration: number; // in seconds
+  distance: number;
+  duration: number;
 }
 
-export function MapboxMap({ locations, selectedLocation, onLocationSelect }: MapboxMapProps) {
+const MapboxMapComponent = ({
+  locations,
+  selectedLocation,
+  onLocationSelect,
+}: MapboxMapProps) => {
   const mapRef = useRef<MapRef>(null);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [route, setRoute] = useState<GeoJSON.Feature<GeoJSON.LineString> | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    null
+  );
+  const [route, setRoute] =
+    useState<GeoJSON.Feature<GeoJSON.LineString> | null>(null);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
@@ -35,10 +52,13 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation([position.coords.longitude, position.coords.latitude]);
+          setUserLocation([
+            position.coords.longitude,
+            position.coords.latitude,
+          ]);
         },
         (error) => {
-          console.error('Error getting user location:', error);
+          console.error("Error getting user location:", error);
           // Fallback to approximate location (Rio de Janeiro)
           setUserLocation([-43.1729, -22.9068]);
         },
@@ -48,9 +68,12 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
       // Watch position for real-time updates
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
-          setUserLocation([position.coords.longitude, position.coords.latitude]);
+          setUserLocation([
+            position.coords.longitude,
+            position.coords.latitude,
+          ]);
         },
-        (error) => console.error('Error watching position:', error),
+        (error) => console.error("Error watching position:", error),
         { enableHighAccuracy: true, maximumAge: 5000 }
       );
 
@@ -71,7 +94,11 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
 
   const getRoute = useCallback(async () => {
     if (!userLocation || !selectedLocation || !MAPBOX_TOKEN) {
-      console.error('Missing requirements for route:', { userLocation, selectedLocation, MAPBOX_TOKEN: !!MAPBOX_TOKEN });
+      console.error("Missing requirements for route:", {
+        userLocation,
+        selectedLocation,
+        MAPBOX_TOKEN: !!MAPBOX_TOKEN,
+      });
       return;
     }
 
@@ -83,10 +110,10 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
       // Use Mapbox Directions API with driving-traffic for best routes
       const response = await fetch(
         `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${userLng},${userLat};${destLng},${destLat}?` +
-        `geometries=geojson&` +
-        `overview=full&` +
-        `steps=true&` +
-        `access_token=${MAPBOX_TOKEN}`
+          `geometries=geojson&` +
+          `overview=full&` +
+          `steps=true&` +
+          `access_token=${MAPBOX_TOKEN}`
       );
 
       if (!response.ok) {
@@ -98,9 +125,9 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
       if (data.routes && data.routes.length > 0) {
         const routeData = data.routes[0];
         const routeGeometry = routeData.geometry;
-        
+
         setRoute({
-          type: 'Feature',
+          type: "Feature",
           properties: {},
           geometry: routeGeometry,
         });
@@ -115,32 +142,38 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
         // Fit map to show entire route
         if (mapRef.current) {
           const bounds: [[number, number], [number, number]] = [
-            [Math.min(userLng, destLng) - 0.01, Math.min(userLat, destLat) - 0.01],
-            [Math.max(userLng, destLng) + 0.01, Math.max(userLat, destLat) + 0.01],
+            [
+              Math.min(userLng, destLng) - 0.01,
+              Math.min(userLat, destLat) - 0.01,
+            ],
+            [
+              Math.max(userLng, destLng) + 0.01,
+              Math.max(userLat, destLat) + 0.01,
+            ],
           ];
-          
+
           mapRef.current.fitBounds(bounds, {
             padding: { top: 100, bottom: 100, left: 100, right: 100 },
             duration: 1000,
           });
         }
       } else {
-        throw new Error('No routes found');
+        throw new Error("No routes found");
       }
     } catch (error) {
-      console.error('Error fetching route:', error);
-      alert('Erro ao traçar rota. Verifique sua conexão e tente novamente.');
+      console.error("Error fetching route:", error);
+      alert("Erro ao traçar rota. Verifique sua conexão e tente novamente.");
     } finally {
       setIsLoadingRoute(false);
     }
   }, [userLocation, selectedLocation, MAPBOX_TOKEN]);
 
-  const clearRoute = () => {
+  const clearRoute = useCallback(() => {
     setRoute(null);
     setRouteInfo(null);
     setIsNavigating(false);
     onLocationSelect?.(null);
-  };
+  }, [onLocationSelect]);
 
   const formatDistance = (meters: number): string => {
     if (meters < 1000) {
@@ -164,7 +197,9 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
       <div className="w-full h-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-900 rounded-2xl">
         <div className="text-center space-y-2">
           <p className="text-neutral-500">Mapbox token não configurado</p>
-          <p className="text-xs text-neutral-400">Configure NEXT_PUBLIC_MAPBOX_TOKEN no .env.local</p>
+          <p className="text-xs text-neutral-400">
+            Configure NEXT_PUBLIC_MAPBOX_TOKEN no .env.local
+          </p>
         </div>
       </div>
     );
@@ -180,7 +215,7 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
           latitude: -22.9068,
           zoom: 11,
         }}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/dark-v11"
       >
         <NavigationControl position="top-right" />
@@ -218,14 +253,14 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
               whileHover={{ scale: 1.2 }}
               whileTap={{ scale: 0.9 }}
               className={`cursor-pointer transition-all ${
-                selectedLocation?.id === location.id ? 'z-10' : ''
+                selectedLocation?.id === location.id ? "z-10" : ""
               }`}
             >
-              <MapPinIcon 
+              <MapPinIcon
                 className={`w-8 h-8 drop-shadow-lg ${
                   selectedLocation?.id === location.id
-                    ? 'text-red-500 scale-125'
-                    : 'text-blue-600'
+                    ? "text-red-500 scale-125"
+                    : "text-blue-600"
                 }`}
               />
             </motion.div>
@@ -239,18 +274,18 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
               id="route"
               type="line"
               paint={{
-                'line-color': '#3b82f6',
-                'line-width': 5,
-                'line-opacity': 0.9,
+                "line-color": "#3b82f6",
+                "line-width": 5,
+                "line-opacity": 0.9,
               }}
             />
             <Layer
               id="route-outline"
               type="line"
               paint={{
-                'line-color': '#1e40af',
-                'line-width': 7,
-                'line-opacity': 0.4,
+                "line-color": "#1e40af",
+                "line-width": 7,
+                "line-opacity": 0.4,
               }}
             />
           </Source>
@@ -268,7 +303,9 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-1 text-white">{selectedLocation.name}</h3>
+                <h3 className="font-semibold text-lg mb-1 text-white">
+                  {selectedLocation.name}
+                </h3>
                 <p className="text-sm text-neutral-400 line-clamp-2">
                   {selectedLocation.description}
                 </p>
@@ -296,7 +333,7 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
                 onClick={getRoute}
                 isLoading={isLoadingRoute}
               >
-                {isLoadingRoute ? 'Traçando rota...' : '🚗 Iniciar Rota'}
+                {isLoadingRoute ? "Traçando rota..." : "🚗 Iniciar Rota"}
               </Button>
             )}
 
@@ -330,5 +367,6 @@ export function MapboxMap({ locations, selectedLocation, onLocationSelect }: Map
       </AnimatePresence>
     </div>
   );
-}
+};
 
+export const MapboxMap = memo(MapboxMapComponent);

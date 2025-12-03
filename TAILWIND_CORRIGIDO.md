@@ -194,3 +194,4 @@ Os estilos devem estar 100% funcionais agora!
 
 **🎨 Design minimalista com Tailwind v3 funcionando perfeitamente!**
 
+
